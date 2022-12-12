@@ -15,7 +15,7 @@ RUN /usr/local/bin/coursier bootstrap \
       sh.almond:scala-kernel_2.12.17:0.13.2 \
       --default=true --sources \
       -o /home/jovyan/almond && \
-      /home/jovyan/almond --install --force --log info --metabrowse --id scala_2.12 --display-name "Scala 2.12" \
+    /home/jovyan/almond --install --force --log info --metabrowse --id scala_2.12 --display-name "Scala 2.12" \
       --copy-launcher \
       --arg "java" \
       --arg "--add-opens=java.base/java.lang=ALL-UNNAMED" \
@@ -41,7 +41,9 @@ RUN /usr/local/bin/coursier bootstrap \
       --arg "scala_2.12" \
       --arg "--display-name" \
       --arg "Scala 2.12" && \
-    rm -rf /home/jovyan/almond /home/jovyan/.ivy2
+    rm -rf /home/jovyan/almond /home/jovyan/.ivy2 && \
+    wget -O /usr/local/spark/jars/hadoop-aws-3.3.2.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar && \
+    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-3.3.1.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/3.3.1/spark-hadoop-cloud_2.12-3.3.1.jar
 
 USER root
 
