@@ -5,7 +5,9 @@ ENV NB_GID=0
 USER root
 
 RUN wget -O /usr/local/bin/coursier https://github.com/coursier/coursier/releases/download/v2.1.0-RC2/coursier && \
-    chmod +x /usr/local/bin/coursier
+    chmod +x /usr/local/bin/coursier && \
+    wget -O /usr/local/spark/jars/hadoop-aws-3.3.2.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar && \
+    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-3.3.1.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/3.3.1/spark-hadoop-cloud_2.12-3.3.1.jar
 
 USER ${NB_UID}
 
@@ -41,9 +43,7 @@ RUN /usr/local/bin/coursier bootstrap \
       --arg "scala_2.12" \
       --arg "--display-name" \
       --arg "Scala 2.12" && \
-    rm -rf /home/jovyan/almond /home/jovyan/.ivy2 && \
-    wget -O /usr/local/spark/jars/hadoop-aws-3.3.2.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar && \
-    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-3.3.1.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/3.3.1/spark-hadoop-cloud_2.12-3.3.1.jar
+    rm -rf /home/jovyan/almond /home/jovyan/.ivy2
 
 USER root
 
