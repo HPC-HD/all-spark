@@ -16,6 +16,7 @@ RUN /usr/local/bin/coursier bootstrap \
       --default=true --sources \
       -o /home/jovyan/almond && \
       /home/jovyan/almond --install --force --log info --metabrowse --id scala_2.12 --display-name "Scala 2.12" \
+      --copy-launcher \
       --arg "java" \
       --arg "--add-opens=java.base/java.lang=ALL-UNNAMED" \
       --arg "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED" \
@@ -30,9 +31,9 @@ RUN /usr/local/bin/coursier bootstrap \
       --arg "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED" \
       --arg "--add-opens=java.base/sun.security.action=ALL-UNNAMED" \
       --arg "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED" \
-      --arg "--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED" \ 
+      --arg "--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED" \
       --arg "-jar" \
-      --arg "/home/jovyan/.local/share/jupyter/kernels/scala_2.12/launcher.jar" \
+      --arg "/home/jovyan/almond" \
       --arg "--log" \
       --arg "info" \
       --arg "--metabrowse" \
