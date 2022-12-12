@@ -7,7 +7,9 @@ USER root
 RUN wget -O /usr/local/bin/coursier https://github.com/coursier/coursier/releases/download/v2.1.0-RC2/coursier && \
     chmod +x /usr/local/bin/coursier && \
     wget -O /usr/local/spark/jars/hadoop-aws-3.3.2.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar && \
-    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-3.3.1.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/3.3.1/spark-hadoop-cloud_2.12-3.3.1.jar
+    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-3.3.1.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/3.3.1/spark-hadoop-cloud_2.12-3.3.1.jar && \
+    wget -O /usr/local/spark/jars/aws-java-sdk-bundle-1.11.1026.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.1026/aws-java-sdk-bundle-1.11.1026.jar && \
+    wget -O /usr/local/spark/jars/wildfly-openssl-1.0.7.Final.jar https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/1.0.7.Final/wildfly-openssl-1.0.7.Final.jar 
 
 USER ${NB_UID}
 
