@@ -5,18 +5,20 @@ FROM jupyter/all-spark-notebook:spark-${SPARK_VERSION}
 
 ARG SPARK_VERSION
 
+ARG HADOOP_VERSION=3.3.4
+
 ENV NB_GID=0 
 
 USER root
 
 RUN wget -O /usr/local/bin/coursier https://github.com/coursier/coursier/releases/download/v2.1.4/coursier && \
     chmod +x /usr/local/bin/coursier && \
-    wget -O /usr/local/spark/jars/hadoop-aws-3.3.6.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.6/hadoop-aws-3.3.6.jar && \
+    wget -O /usr/local/spark/jars/hadoop-aws-${HADOOP_VERSION}.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_VERSION}/hadoop-aws-${HADOOP_VERSION}.jar && \
     wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-${SPARK_VERSION}.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/${SPARK_VERSION}/spark-hadoop-cloud_2.12-${SPARK_VERSION}.jar && \
     wget -O /usr/local/spark/jars/aws-java-sdk-bundle-1.12.512.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.512/aws-java-sdk-bundle-1.12.512.jar && \
     wget -O /usr/local/spark/jars/wildfly-openssl-2.2.5.Final.jar https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/2.2.5.Final/wildfly-openssl-2.2.5.Final.jar && \
     wget -O /usr/local/spark/jars/mariadb-java-client-3.1.4.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.1.4/mariadb-java-client-3.1.4.jar && \
-    wget -O - https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz | tar -C /usr/lib --strip-components=3 -xz hadoop-3.3.6/lib/native && \
+    wget -O - https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz | tar -C /usr/lib --strip-components=3 -xz hadoop-${HADOOP_VERSION}/lib/native && \
     mamba install --yes poetry && \
     mamba clean --all -f -y
 
