@@ -1,5 +1,5 @@
 
-FROM jupyter/all-spark-notebook:spark-${spark_version}
+FROM jupyter/all-spark-notebook:spark-3.4.1
 
 ENV HADOOP_VERSION=3.3.4
 
