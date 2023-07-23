@@ -1,23 +1,29 @@
-FROM jupyter/all-spark-notebook
+
+ARG SPARK_VERSION=3.4.1
+
+FROM jupyter/all-spark-notebook:spark-${SPARK_VERSION}
+
+ARG SPARK_VERSION
 
 ENV NB_GID=0 
 
 USER root
 
-RUN wget -O /usr/local/bin/coursier https://github.com/coursier/coursier/releases/download/v2.1.0-RC2/coursier && \
+RUN wget -O /usr/local/bin/coursier https://github.com/coursier/coursier/releases/download/v2.1.4/coursier && \
     chmod +x /usr/local/bin/coursier && \
-    wget -O /usr/local/spark/jars/hadoop-aws-3.3.2.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar && \
-    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-3.3.1.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/3.3.1/spark-hadoop-cloud_2.12-3.3.1.jar && \
-    wget -O /usr/local/spark/jars/aws-java-sdk-bundle-1.11.1026.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.1026/aws-java-sdk-bundle-1.11.1026.jar && \
-    wget -O /usr/local/spark/jars/wildfly-openssl-1.0.7.Final.jar https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/1.0.7.Final/wildfly-openssl-1.0.7.Final.jar && \
-    wget -O /usr/local/spark/jars/mariadb-java-client-3.1.0.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.1.0/mariadb-java-client-3.1.0.jar
+    wget -O /usr/local/spark/jars/hadoop-aws-3.3.6.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.6/hadoop-aws-3.3.6.jar && \
+    wget -O /usr/local/spark/jars/spark-hadoop-cloud_2.12-${SPARK_VERSION}.jar https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_2.12/${SPARK_VERSION}/spark-hadoop-cloud_2.12-${SPARK_VERSION}.jar && \
+    wget -O /usr/local/spark/jars/aws-java-sdk-bundle-1.12.512.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.512/aws-java-sdk-bundle-1.12.512.jar && \
+    wget -O /usr/local/spark/jars/wildfly-openssl-2.2.5.Final.jar https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/2.2.5.Final/wildfly-openssl-2.2.5.Final.jar && \
+    wget -O /usr/local/spark/jars/mariadb-java-client-3.1.4.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.1.4/mariadb-java-client-3.1.4.jar && \
+    wget -O - https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz | tar -C /usr/lib --strip-components=3 -xz hadoop-3.3.6/lib/native
 
 USER ${NB_UID}
 
 RUN /usr/local/bin/coursier bootstrap \
       -r jitpack \
-      -i user -I user:sh.almond:scala-kernel-api_2.12.17:0.13.2 \
-      sh.almond:scala-kernel_2.12.17:0.13.2 \
+      -i user -I user:sh.almond:scala-kernel-api_2.12.18:0.14.0-RC12 \
+      sh.almond:scala-kernel_2.12.18:0.14.0-RC12 \
       --default=true --sources \
       -o /home/jovyan/almond && \
     /home/jovyan/almond --install --force --log info --metabrowse --id scala_2.12 --display-name "Scala 2.12" \
