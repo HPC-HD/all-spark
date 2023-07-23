@@ -17,7 +17,8 @@ RUN wget -O /usr/local/bin/coursier https://github.com/coursier/coursier/release
     wget -O /usr/local/spark/jars/wildfly-openssl-2.2.5.Final.jar https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/2.2.5.Final/wildfly-openssl-2.2.5.Final.jar && \
     wget -O /usr/local/spark/jars/mariadb-java-client-3.1.4.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.1.4/mariadb-java-client-3.1.4.jar && \
     wget -O - https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz | tar -C /usr/lib --strip-components=3 -xz hadoop-3.3.6/lib/native && \
-    mamba install --yes poetry
+    mamba install --yes poetry && \
+    mamba clean --all -f -y
 
 USER ${NB_UID}
 
