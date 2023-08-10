@@ -1,0 +1,525 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: all-spark-cluster-template
+  annotations:
+    openshift.io/display-name: "Spark Cluster"
+    description: >-
+      Template for deploying a standalone Spark Cluster within OpenShift
+    iconClass: "icon-hadoop"
+    tags: "spark"
+parameters:
+  - name: APP_NAME
+    description: Application name used to group resources and form URLs
+    value: spark
+    required: true
+  - name: SHARED_STORAGE_SIZE
+    description: Size of the storage claim for shared data directory
+    value: 10Gi
+    required: true
+  - name: ACCESS_KEY_ID
+    description: S3 access key ID
+    required: true
+  - name: SECRET_ACCESS_KEY
+    description: S3 secret access key
+    required: true
+objects:
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-history-server
+    spec:
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: edge
+      to:
+        kind: Service
+        name: spark-history-server
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-master-ui
+    spec:
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: edge
+      to:
+        kind: Service
+        name: spark-master-ui
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-notebook
+    spec:
+      port:
+        targetPort: 8888-tcp
+      tls:
+        insecureEdgeTerminationPolicy: Redirect
+        termination: edge
+      to:
+        kind: Service
+        name: spark-notebook
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-history-server
+    spec:
+      ports:
+        - port: 8087
+          protocol: TCP
+          targetPort: 8087
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-history-server
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-master
+    spec:
+      ports:
+        - port: 7077
+          protocol: TCP
+          targetPort: 7077
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-master
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-master-ui
+    spec:
+      ports:
+        - port: 8087
+          protocol: TCP
+          targetPort: 8087
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-master
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-notebook
+    spec:
+      ports:
+        - name: 4040-tcp
+          port: 4040
+          protocol: TCP
+          targetPort: 4040
+        - name: 8888-tcp
+          port: 8888
+          protocol: TCP
+          targetPort: 8888
+        - name: 2222-tcp
+          port: 2222
+          protocol: TCP
+          targetPort: 2222
+        - name: 7777-tcp
+          port: 7777
+          protocol: TCP
+          targetPort: 7777
+        - name: 9999-tcp
+          port: 9999
+          protocol: TCP
+          targetPort: 9999
+      selector:
+        deploymentconfig: spark-notebook
+        app: "${APP_NAME}"
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-history-server
+    spec:
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-history-server
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: "${APP_NAME}"
+            deploymentconfig: spark-history-server
+        spec:
+          containers:
+            - args:
+                - /usr/local/spark/sbin/start-history-server.sh
+                - --properties-file
+                - /usr/local/spark/conf/spark-defaults.conf
+              command:
+                - /usr/local/bin/start.sh
+              env:
+                - name: SPARK_NO_DAEMONIZE
+                  value: "true"
+              image: quay.io/hsci/all-spark:spark-3.4.1
+              imagePullPolicy: Always
+              name: all-spark
+              ports:
+                - containerPort: 18080
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 1500m
+                requests:
+                  cpu: 50m
+              volumeMounts:
+                - mountPath: /usr/local/spark/conf
+                  name: spark-config
+                - mountPath: /home/jovyan/work
+                  name: recovery-data
+            - env:
+                - name: FORWARD_PORT
+                  value: "18080"
+                - name: BASIC_AUTH_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      key: username
+                      name: spark-credentials
+                - name: BASIC_AUTH_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: spark-credentials
+              image: xscys/nginx-sidecar-basic-auth
+              imagePullPolicy: Always
+              name: auth-proxy
+              ports:
+                - containerPort: 8087
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 32Mi
+          restartPolicy: Always
+          volumes:
+            - configMap:
+                defaultMode: 420
+                name: spark-config
+              name: spark-config
+            - name: recovery-data
+              persistentVolumeClaim:
+                claimName: "${APP_NAME}-pvc"
+      triggers:
+        - type: ConfigChange
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-master
+    spec:
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-master
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: "${APP_NAME}"
+            deploymentconfig: spark-master
+        spec:
+          containers:
+            - args:
+                - /usr/local/spark/sbin/start-master.sh
+              command:
+                - /usr/local/bin/start.sh
+              env:
+                - name: SPARK_MASTER_HOST
+                  value: 0.0.0.0
+                - name: SPARK_MASTER_PORT
+                  value: "7077"
+                - name: SPARK_NO_DAEMONIZE
+                  value: "true"
+              image: quay.io/hsci/all-spark:spark-3.4.1
+              imagePullPolicy: Always
+              name: all-spark
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 1500m
+                requests:
+                  cpu: 50m
+              volumeMounts:
+                - mountPath: /usr/local/spark/conf
+                  name: spark-config
+                - mountPath: /home/jovyan/work
+                  name: recovery-data
+            - env:
+                - name: BASIC_AUTH_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      key: username
+                      name: spark-credentials
+                - name: BASIC_AUTH_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: password
+                      name: spark-credentials
+              image: xscys/nginx-sidecar-basic-auth
+              imagePullPolicy: Always
+              name: auth-proxy
+              ports:
+                - containerPort: 8087
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 32Mi
+          volumes:
+            - configMap:
+                defaultMode: 420
+                name: spark-config
+              name: spark-config
+            - name: recovery-data
+              persistentVolumeClaim:
+                claimName: hpc-hd-spark-pvc
+      triggers:
+        - type: ConfigChange
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-notebook
+    spec:
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-notebook
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: "${APP_NAME}"
+            deploymentconfig: spark-notebook
+        spec:
+          containers:
+            - args:
+                - /bin/sh
+                - -c
+                - /usr/local/bin/start-notebook.sh --NotebookApp.password=${NBPASSWORD}
+              env:
+                - name: RESTARTABLE
+                  value: "yes"
+                - name: NBPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: nbpassword
+                      name: spark-credentials
+              image: quay.io/hsci/all-spark:spark-3.4.1
+              imagePullPolicy: Always
+              name: all-spark
+              ports:
+                - containerPort: 4040
+                  protocol: TCP
+                - containerPort: 8888
+                  protocol: TCP
+                - containerPort: 2222
+                  protocol: TCP
+                - containerPort: 7777
+                  protocol: TCP
+                - containerPort: 9999
+                  protocol: TCP
+              resources:
+                limits:
+                  memory: 16Gi
+              volumeMounts:
+                - mountPath: /home/jovyan/work
+                  name: data
+                - mountPath: /usr/local/spark/conf
+                  name: spark-config
+          volumes:
+            - configMap:
+                defaultMode: 420
+                name: spark-config
+              name: spark-config
+            - name: data
+              persistentVolumeClaim:
+                claimName: "${APP_NAME}-data"
+      triggers:
+        - type: ConfigChange
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-worker
+    spec:
+      selector:
+        app: "${APP_NAME}"
+        deploymentconfig: spark-worker
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: "${APP_NAME}"
+            deploymentconfig: spark-worker
+        spec:
+          containers:
+            - args:
+                - /usr/local/spark/sbin/start-worker.sh
+                - spark://spark-master:7077
+              command:
+                - /usr/local/bin/start.sh
+              env:
+                - name: SPARK_WORKER_PORT
+                  value: "7077"
+                - name: SPARK_NO_DAEMONIZE
+                  value: "true"
+              image: quay.io/hsci/all-spark:spark-3.4.1
+              imagePullPolicy: Always
+              name: all-spark
+              resources:
+                limits:
+                  memory: 16Gi
+              volumeMounts:
+                - mountPath: /usr/local/spark/conf
+                  name: spark-config
+                - mountPath: /home/jovyan/work
+                  name: data
+          volumes:
+            - configMap:
+                defaultMode: 420
+                name: spark-config
+              name: spark-config
+            - name: data
+              persistentVolumeClaim:
+                claimName: "${APP_NAME}-data"
+      triggers:
+        - type: ConfigChange
+  - apiVersion: v1
+    data:
+      spark-defaults.conf: |
+        # Spark configuration shared by all the components
+        # 15.5G = 15872M
+        # 14.5G = 14848M
+        # 13.5G = 13824M
+        spark.master                                                   spark://spark-master:7077
+        #spark.scheduler.mode                                           FAIR
+        spark.deploy.recoveryMode                                      FILESYSTEM
+        spark.deploy.recoveryDirectory                                 /home/jovyan/work/spark-recovery-state
+        spark.ui.reverseProxy                                          true
+        spark.worker.cleanup.enabled                                   true
+        spark.cleaner.referenceTracking.cleanCheckpoints               true
+        spark.driver.supervise                                         true
+
+        spark.eventLog.enabled                                         true
+        spark.eventLog.compress                                        true
+        spark.eventLog.dir                                             /home/jovyan/work/spark-logs
+        spark.history.fs.logDirectory                                  /home/jovyan/work/spark-logs
+        spark.history.fs.cleaner.enabled                               true
+
+        spark.shuffle.service.enabled                                  true
+        spark.shuffle.service.fetch.rdd.enabled                        true
+        spark.shuffle.io.maxRetries                                    16
+        spark.shuffle.io.numConnectionsPerPeer                         3
+        spark.shuffle.consolidateFiles                                 true
+        spark.rdd.compress                                             true
+        spark.serializer                                               org.apache.spark.serializer.KryoSerializer
+        spark.kryoserializer.buffer.max                                2047M
+
+        #spark.dynamicAllocation.enabled                                false
+        spark.dynamicAllocation.enabled                                true
+        spark.dynamicAllocation.minExecutors                           1
+        spark.dynamicAllocation.executorIdleTimeout                    240s
+        spark.executor.instances                                       16
+
+        spark.worker.memory                                            13G
+        spark.worker.cores                                             2
+        spark.executor.memory                                          12G
+        spark.executor.cores                                           2
+
+        spark.network.timeout                                          3600s
+
+        spark.driver.memory                                            14G
+        spark.driver.maxResultSize                                     13G
+        spark.driver.cores                                             2
+        spark.driver.host                                              spark-notebook
+        spark.driver.bindAddress                                       0.0.0.0
+        spark.driver.port                                              2222
+        spark.driver.blockManager.port                                 7777
+        spark.repl.class.port                                          9999
+
+        # a3s
+
+        spark.hadoop.fs.s3a.path.style.access                          true
+        spark.hadoop.fs.s3a.endpoint                                   a3s.fi
+        spark.hadoop.fs.s3a.access.key                                 ${ACCESS_KEY_ID}
+        spark.hadoop.fs.s3a.secret.key                                 ${SECRET_ACCESS_KEY}
+        spark.hadoop.fs.s3a.bucket.all.committer.magic.enabled         true
+        spark.hadoop.fs.s3a.threads.max                                20
+        spark.hadoop.fs.s3a.connection.maximum                         20
+        spark.hadoop.fs.s3a.block.size                                 128M
+        spark.hadoop.fs.s3a.ssl.channel.mode                           openssl
+        #spark.hadoop.fs.s3a.fast.upload.buffer                        bytebuffer
+        spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version   2
+        spark.hadoop.fs.s3a.directory.marker.retention                 keep
+
+        # S3 optimised parquet options
+
+        spark.sql.parquet.aggregatePushdown                            true
+        spark.sql.parquet.compression.codec                            zstd
+        spark.hadoop.parquet.summary.metadata.level                    none
+        spark.hadoop.parquet.writer.version                            PARQUET_2_0
+        spark.hadoop.parquet.bloom.filter.enabled                      true
+        spark.hadoop.parquet.bloom.filter.adaptive.enabled             true
+        spark.hadoop.parquet.bloom.filter.max.bytes                    33554432
+        spark.sql.parquet.mergeSchema                                  false
+        spark.sql.hive.metastorePartitionPruning                       true
+
+        # Other parquet options
+
+        spark.sql.parquet.datetimeRebaseModeInRead                     CORRECTED
+        spark.sql.parquet.datetimeRebaseModeInWrite                    CORRECTED
+        spark.sql.parquet.int96RebaseModeInRead                        CORRECTED
+        spark.sql.parquet.int96RebaseModeInWrite                       CORRECTED
+
+        # Spark SQL tuning
+        spark.sql.shuffle.partitions                                   256
+        spark.sql.optimizer.canChangeCachedPlanOutputPartitioning      true
+        spark.sql.bucketing.coalesceBucketsInJoin.enabled              true
+        spark.sql.adaptive.coalescePartitions.parallelismFirst         false
+        spark.sql.adaptive.advisoryPartitionSizeInBytes                80MB
+        spark.sql.adaptive.coalescePartitions.minPartitionSize         16MB
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: spark-config
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app: "${APP_NAME}"
+      name: "${APP_NAME}-data"
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: "${SHARED_STORAGE_SIZE}"
