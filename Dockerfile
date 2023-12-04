@@ -1,5 +1,5 @@
 
-FROM jupyter/all-spark-notebook:spark-3.5.0
+FROM jupyter/all-spark-notebook:spark-3.5.0 as build
 
 ENV SCALA_VERSION=2.12
 
@@ -55,6 +55,9 @@ RUN /usr/local/bin/coursier bootstrap almond -o /home/jovyan/almond && \
 USER root
 
 RUN fix-permissions /home/jovyan /opt/conda && chmod g+rwX /usr/local/spark && chown :0 /usr/local/spark
+
+FROM scratch
+COPY --from=build / /
 
 USER 65536
 
