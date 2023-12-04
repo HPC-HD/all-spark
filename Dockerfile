@@ -15,7 +15,7 @@ RUN wget -P /usr/local/bin/ https://github.com/coursier/coursier/releases/downlo
     wget -P /usr/local/spark/jars/ https://repo.maven.apache.org/maven2/org/apache/spark/spark-hadoop-cloud_${SCALA_VERSION}/${APACHE_SPARK_VERSION}/spark-hadoop-cloud_${SCALA_VERSION}-${APACHE_SPARK_VERSION}.jar && \
     wget -P /usr/local/spark/jars/ https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.604/aws-java-sdk-bundle-1.12.604.jar && \
     wget -P /usr/local/spark/jars/ https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/2.2.5.Final/wildfly-openssl-2.2.5.Final.jar && \
-    wget -P /usr/local/spark/jars/ https://repo.maven.apache.org/maven2/org/apache/spark/spark-network-shuffle_${SCALA_VERSION}/${APACHE_SPARK_VERSION}/spark-network-shuffle_${SCALA_VERSION}-${APACHE_SPARK_VERSION}.jar && \
+    wget -P /usr/local/spark/jars/ https://github.com/IBM/spark-s3-shuffle/releases/download/v0.9.5/spark-s3-shuffle_2.12-3.4.0_0.9.5.jar && \
     wget -P /usr/local/spark/jars/ https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.3.1/mariadb-java-client-3.3.1.jar && \
     wget -O - https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz | tar -C /usr/lib --strip-components=3 -xz hadoop-${HADOOP_VERSION}/lib/native && \
     mamba install --yes poetry && \
