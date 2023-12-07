@@ -23,8 +23,8 @@ RUN wget -P /usr/local/bin/ https://github.com/coursier/coursier/releases/downlo
 
 USER ${NB_UID}
 
-RUN /usr/local/bin/coursier bootstrap almond -o /home/jovyan/almond && \
-    /home/jovyan/almond --install --force --log info --metabrowse --extra-classpath "/usr/local/spark/jars/*" --scala-version ${scala_version} --id scala_${scala_version} --display-name "Scala ${scala_version}" \
+RUN /usr/local/bin/coursier bootstrap --scala-version ${SCALA_VERSION} almond -o /home/jovyan/almond && \
+    /home/jovyan/almond --install --force --log info --metabrowse --extra-classpath "/usr/local/spark/jars/*" --id scala_${SCALA_VERSION} --display-name "Scala ${SCALA_VERSION}" \
       --copy-launcher \
       --arg "java" \
       --arg "--add-opens=java.base/java.lang=ALL-UNNAMED" \
@@ -46,10 +46,12 @@ RUN /usr/local/bin/coursier bootstrap almond -o /home/jovyan/almond && \
       --arg "--log" \
       --arg "info" \
       --arg "--metabrowse" \
+      --arg "--extra-classpath" \
+      --arg "/usr/local/spark/jars/*" \
       --arg "--id" \
-      --arg "scala_${scala_version}" \
+      --arg "scala_${SCALA_VERSION}" \
       --arg "--display-name" \
-      --arg "Scala ${scala_version}" && \
+      --arg "Scala ${SCALA_VERSION}" && \
     rm -rf /home/jovyan/almond /home/jovyan/.ivy2
 
 USER root
