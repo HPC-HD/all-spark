@@ -24,7 +24,7 @@ RUN wget -P /usr/local/bin/ https://github.com/coursier/coursier/releases/downlo
 USER ${NB_UID}
 
 RUN /usr/local/bin/coursier bootstrap almond -o /home/jovyan/almond && \
-    /home/jovyan/almond --install --force --log info --metabrowse --id scala_${scala_version} --display-name "Scala ${scala_version}" \
+    /home/jovyan/almond --install --force --log info --metabrowse --scala-version ${scala_version} --id scala_${scala_version} --display-name "Scala ${scala_version}" \
       --copy-launcher \
       --arg "java" \
       --arg "--add-opens=java.base/java.lang=ALL-UNNAMED" \
