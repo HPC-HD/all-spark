@@ -166,7 +166,7 @@ objects:
               env:
                 - name: SPARK_NO_DAEMONIZE
                   value: "true"
-              image: quay.io/hsci/all-spark:spark-3.4.1
+              image: quay.io/hsci/all-spark:spark-3.5.0
               imagePullPolicy: Always
               name: all-spark
               ports:
@@ -249,7 +249,7 @@ objects:
                   value: "7077"
                 - name: SPARK_NO_DAEMONIZE
                   value: "true"
-              image: quay.io/hsci/all-spark:spark-3.4.1
+              image: quay.io/hsci/all-spark:spark-3.5.0
               imagePullPolicy: Always
               name: all-spark
               ports:
@@ -330,7 +330,7 @@ objects:
                     secretKeyRef:
                       key: nbpassword
                       name: spark-credentials
-              image: quay.io/hsci/all-spark:spark-3.4.1
+              image: quay.io/hsci/all-spark:spark-3.5.0
               imagePullPolicy: Always
               name: all-spark
               ports:
@@ -391,7 +391,7 @@ objects:
                   value: "7077"
                 - name: SPARK_NO_DAEMONIZE
                   value: "true"
-              image: quay.io/hsci/all-spark:spark-3.4.1
+              image: quay.io/hsci/all-spark:spark-3.5.0
               imagePullPolicy: Always
               name: all-spark
               resources:
