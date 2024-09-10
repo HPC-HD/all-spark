@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: spark-config
+data:
+  spark-defaults.conf: |
+    # Rahti-specific master configs
+
+    spark.master                                                    spark://spark-master:7077
+    spark.deploy.recoveryMode                                       FILESYSTEM
+    spark.deploy.recoveryDirectory                                  /home/jovyan/spark-recovery/
+    spark.ui.reverseProxy                                           true
+
+    # Rahti-specific driver configs
+
+    spark.driver.memory                                             27G
+    spark.driver.maxResultSize                                      26G
+    spark.driver.cores                                              2
+    spark.driver.host                                               spark-notebook
+    spark.driver.bindAddress                                        0.0.0.0
+    spark.driver.port                                               2222
+    spark.driver.blockManager.port                                  7777
+    spark.repl.class.port                                           9999
+
+    # Rahti-specific worker/executor limits
+
+    spark.worker.memory                                             27G
+    spark.worker.cores                                              2
+    spark.executor.memory                                           27G
+    spark.executor.cores                                            2
+
+    # Shuffle service config (not sure if useful outside Rahti)
+
+    spark.shuffle.manager                                           org.apache.spark.shuffle.sort.S3ShuffleManager
+    spark.shuffle.sort.io.plugin.class                              org.apache.spark.shuffle.S3ShuffleDataIO
+    spark.shuffle.checksum.enabled                                  false
+    spark.shuffle.s3.rootDir                                        s3a://{{ .Values.appName }}/spark-shuffle/
+    spark.shuffle.consolidateFiles                                  true
+
+    #spark.shuffle.service.enabled                                   true
+    #spark.shuffle.service.fetch.rdd.enabled                         true
+    #spark.shuffle.io.maxRetries                                     16
+    #spark.shuffle.io.numConnectionsPerPeer                          3
+
+
+    # Possibly generally useful Spark configs related to history service
+
+    spark.eventLog.enabled                                          true
+    spark.eventLog.compress                                         true
+    spark.eventLog.dir                                              s3a://{{ .Values.appName }}/spark-logs/
+    spark.history.fs.logDirectory                                   s3a://{{ .Values.appName }}/spark-logs/
+    spark.history.fs.cleaner.enabled                                true
+
+    # Spark cleanup/driver restart configs
+
+    spark.worker.cleanup.enabled                                    true
+    spark.cleaner.referenceTracking.cleanCheckpoints                true
+    spark.driver.supervise                                          true
+
+    # Spark dynamic allocation limits
+
+    spark.dynamicAllocation.enabled                                 true
+    spark.dynamicAllocation.minExecutors                            0
+    spark.dynamicAllocation.initialExecutors                        0
+    spark.dynamicAllocation.executorIdleTimeout                     240s
+
+    # Lenient timeouts + retries configs
+
+    spark.network.timeout                                           3600s
+    spark.task.maxFailures                                          32
+
+    # Generally useful serialisation configs
+
+    spark.rdd.compress                                              true
+    spark.checkpoint.compress                                       true
+    spark.io.compression.codec                                      zstd
+    spark.serializer                                                org.apache.spark.serializer.KryoSerializer
+    spark.kryoserializer.buffer.max                                 2047M
+    # ^ if enough memory on workers
+
+    # Allas-specific configs
+
+    spark.hadoop.fs.s3a.endpoint                                    {{ .Values.s3endpoint }}
+    spark.hadoop.fs.s3a.access.key                                  {{ .Values.accessKeyId }}
+    spark.hadoop.fs.s3a.secret.key                                  {{ .Values.secretAccessKey }}
+
+
+    # General S3 tunables
+
+    spark.hadoop.fs.s3a.path.style.access                           true
+    spark.hadoop.fs.s3a.bucket.all.committer.magic.enabled          true
+    spark.hadoop.fs.s3a.threads.max                                 20
+    spark.hadoop.fs.s3a.connection.maximum                          20
+    spark.hadoop.fs.s3a.block.size                                  128M
+    spark.hadoop.fs.s3a.ssl.channel.mode                            openssl
+    #spark.hadoop.fs.s3a.fast.upload.buffer                          bytebuffer
+    spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version    2
+    spark.hadoop.fs.s3a.directory.marker.retention                  keep
+
+    # S3 optimised parquet option
+
+    spark.sql.parquet.aggregatePushdown                             true
+    spark.sql.parquet.compression.codec                             zstd
+    spark.hadoop.parquet.summary.metadata.level                     none
+    spark.hadoop.parquet.writer.version                             PARQUET_2_0
+    spark.hadoop.parquet.bloom.filter.enabled                       true
+    spark.hadoop.parquet.bloom.filter.adaptive.enabled              true
+    spark.hadoop.parquet.bloom.filter.max.bytes                     33554432
+    spark.sql.parquet.mergeSchema                                   false
+    spark.sql.hive.metastorePartitionPruning                        true
+
+    # Spark SQL tuning
+    spark.sql.shuffle.partitions                                    256
+    spark.sql.optimizer.canChangeCachedPlanOutputPartitioning       true
+    spark.sql.bucketing.coalesceBucketsInJoin.enabled               true
+    spark.sql.adaptive.coalescePartitions.parallelismFirst          false
+    spark.sql.adaptive.advisoryPartitionSizeInBytes                 80MB
+    spark.sql.adaptive.coalescePartitions.minPartitionSize          16MB
+    spark.sql.objectHashAggregate.sortBased.fallbackThreshold       2147483647
+    # ^Prefer dying to OOM and having to manually tune e.g. partition counts to falling back to sort-based aggregation

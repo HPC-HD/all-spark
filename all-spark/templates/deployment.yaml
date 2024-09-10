@@ -1,0 +1,276 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: spark-history-server
+  annotations:
+    app.openshift.io/connects-to: spark-master
+spec:
+  selector:
+    matchLabels:  
+      app: {{ .Values.appName }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        role: spark-history-server
+    spec:
+      containers:
+      - args:
+        - /usr/local/spark/sbin/start-history-server.sh
+        - --properties-file
+        - /usr/local/spark/conf/spark-defaults.conf
+        command:
+        - /usr/local/bin/start.sh
+        env:
+        - name: SPARK_NO_DAEMONIZE
+          value: "true"
+        image: quay.io/hsci/all-spark:{{ .Values.sparkVersion }}
+        imagePullPolicy: Always
+        name: all-spark
+        ports:
+        - containerPort: 18080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 0.5 # 1
+          requests:
+            cpu: 0.5
+        volumeMounts:
+        - mountPath: /usr/local/spark/conf
+          name: spark-config
+      - env:
+        - name: FORWARD_PORT
+          value: "18080"
+        - name: BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: spark-credentials
+        - name: BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: spark-credentials
+        image: xscys/nginx-sidecar-basic-auth
+        imagePullPolicy: Always
+        name: auth-proxy
+        ports:
+        - containerPort: 8087
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 0.1 # 0.5
+            memory: 32Mi # 256Mi
+          requests:
+            cpu: 0.1
+            memory: 32Mi
+      restartPolicy: Always
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: spark-config
+        name: spark-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: spark-master
+spec:
+  selector:
+    matchLabels:  
+      app: {{ .Values.appName }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        role: spark-master
+    spec:
+      containers:
+      - args:
+        - /usr/local/spark/sbin/start-master.sh
+        command:
+        - /usr/local/bin/start.sh
+        env:
+        - name: SPARK_MASTER_HOST
+          value: 0.0.0.0
+        - name: SPARK_MASTER_PORT
+          value: "7077"
+        - name: SPARK_NO_DAEMONIZE
+          value: "true"
+        image: quay.io/hsci/all-spark:{{ .Values.sparkVersion }}
+        imagePullPolicy: Always
+        name: all-spark
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 1 # 2
+          requests:
+            cpu: 0.5
+        volumeMounts:
+        - mountPath: /usr/local/spark/conf
+          name: spark-config
+        - mountPath: /home/jovyan/work
+          name: spark-master-data
+      - env:
+        - name: BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: spark-credentials
+        - name: BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: spark-credentials
+        image: xscys/nginx-sidecar-basic-auth
+        imagePullPolicy: Always
+        name: auth-proxy
+        ports:
+        - containerPort: 8087
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 0.1 # 0.5
+            memory: 32Mi # 256Mi
+          requests:
+            cpu: 0.1
+            memory: 32Mi
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: spark-config
+        name: spark-config
+      - name: spark-master-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.appName }}-master-data
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: spark-notebook
+  annotations:
+    app.openshift.io/connects-to: spark-master
+spec:
+  selector:
+    matchLabels:  
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        role: spark-notebook
+    spec:
+      containers:
+      - args:
+        - /bin/sh
+        - -c
+        - /usr/local/bin/start-notebook.sh --NotebookApp.password=${NBPASSWORD}
+        env:
+        - name: RESTARTABLE
+          value: "yes"
+        - name: NBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: nbpassword
+              name: spark-credentials
+        image: quay.io/hsci/all-spark:{{ .Values.sparkVersion }}
+        imagePullPolicy: Always
+        name: all-spark
+        ports:
+        - containerPort: 4040
+          protocol: TCP
+        - containerPort: 8888
+          protocol: TCP
+        - containerPort: 2222
+          protocol: TCP
+        - containerPort: 7777
+          protocol: TCP
+        - containerPort: 9999
+          protocol: TCP
+        resources:
+          limits:
+            memory: 2Gi # 16Gi
+            cpu: 1 # 2
+          requests:
+            cpu: 1
+        volumeMounts:
+        - mountPath: /home/jovyan/work
+          name: {{ .Values.appName }}-notebook-data
+        - mountPath: /usr/local/spark/conf
+          name: spark-config
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: spark-config
+        name: spark-config
+  volumeClaimTemplates:
+    - metadata:
+        labels:
+          app: {{ .Values.appName }}
+        name: {{ .Values.appName }}-notebook-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.notebookStorageSize }}
+        storageClassName: standard-csi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: spark-worker
+  annotations:
+    app.openshift.io/connects-to: spark-master
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+        role: spark-worker
+    spec:
+      containers:
+      - args:
+        - /usr/local/spark/sbin/start-worker.sh
+        - spark://spark-master:7077
+        command:
+        - /usr/local/bin/start.sh
+        env:
+        - name: SPARK_WORKER_PORT
+          value: "7077"
+        - name: SPARK_NO_DAEMONIZE
+          value: "true"
+        image: quay.io/hsci/all-spark:{{ .Values.sparkVersion }}
+        imagePullPolicy: Always
+        name: all-spark
+        resources:
+          limits:
+            memory: 2Gi # 16Gi
+        volumeMounts:
+        - mountPath: /usr/local/spark/conf
+          name: spark-config
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: spark-config
+        name: spark-config
