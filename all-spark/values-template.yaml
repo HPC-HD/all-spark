@@ -1,0 +1,7 @@
+appName: hpc-hd-spark
+notebookStorageSize: 8Gi
+masterStorageSize: 256Mi
+s3endpoint: a3s.fi
+accessKeyId: YOUR_ACCESS_KEY
+secretAccessKey: YOUR_SECRET_ACCESS_KEY
+sparkVersion: spark-3.5.0

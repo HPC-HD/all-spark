@@ -1,0 +1,6 @@
+apiVersion: v1
+description: Template for deploying a standalone Spark Cluster within OpenShift
+name: all-spark-cluster-template
+keywords:
+  - spark
+version: v0.0.1
