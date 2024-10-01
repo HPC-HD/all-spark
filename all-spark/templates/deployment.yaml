@@ -199,6 +199,9 @@ spec:
           protocol: TCP
         - containerPort: 9999
           protocol: TCP
+        # for Dagster Route
+        - containerPort: 3000
+          protocol: TCP
         resources:
           limits:
             memory: 2Gi # 16Gi

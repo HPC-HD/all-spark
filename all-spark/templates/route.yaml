@@ -41,3 +41,20 @@ spec:
   to:
     kind: Service
     name: spark-notebook
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: dagster
+spec:
+  port:
+    targetPort: 3000-tcp
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: spark-notebook
+---

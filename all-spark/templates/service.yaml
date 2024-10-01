@@ -71,6 +71,10 @@ spec:
     port: 9999
     protocol: TCP
     targetPort: 9999
+  - name: 3000-tcp
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
   selector:
     app: {{ .Values.appName }}
     role: spark-notebook
