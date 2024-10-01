@@ -274,7 +274,11 @@ spec:
         name: all-spark
         resources:
           limits:
-            memory: 2Gi # 16Gi
+            memory: {{ .Values.spark.workerDeploy.limits.memory}}
+            cpu: {{ .Values.spark.workerDeploy.limits.cpu}}
+          requests:
+            memory: {{ .Values.spark.workerDeploy.requests.memory}} 
+            cpu: {{ .Values.spark.workerDeploy.requests.cpu}} 
         volumeMounts:
         - mountPath: /usr/local/spark/conf
           name: spark-config

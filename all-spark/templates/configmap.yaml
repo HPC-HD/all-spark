@@ -26,10 +26,10 @@ data:
 
     # Rahti-specific worker/executor limits
 
-    spark.worker.memory                                             27G
-    spark.worker.cores                                              2
-    spark.executor.memory                                           27G
-    spark.executor.cores                                            2
+    spark.worker.memory                                             {{ .Values.spark.workerConfig.memory}}
+    spark.worker.cores                                              {{ .Values.spark.workerConfig.cpu}}
+    spark.executor.memory                                           {{ .Values.spark.workerConfig.memory}}
+    spark.executor.cores                                            {{ .Values.spark.workerConfig.cpu}}
 
     # Shuffle service config (not sure if useful outside Rahti)
 

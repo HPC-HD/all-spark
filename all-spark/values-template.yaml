@@ -6,3 +6,14 @@ accessKeyId: YOUR_ACCESS_KEY
 secretAccessKey: YOUR_SECRET_ACCESS_KEY
 sparkVersion: spark-3.5.0
 githubKeyLocation: [Location To Github SSH Key]
+spark:
+  workerConfig:
+    memory: 15G
+    cores: 2
+  workerDeploy:
+    requests:
+      memory: 16Gi
+      cpu: 2
+    limits:
+      memory: 16Gi
+      cpu: 2
