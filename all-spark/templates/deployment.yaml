@@ -213,11 +213,17 @@ spec:
           name: {{ .Values.appName }}-notebook-data
         - mountPath: /usr/local/spark/conf
           name: spark-config
+        - mountPath: /etc/ssh-config
+          name: ssh-config
       volumes:
       - configMap:
           defaultMode: 420
           name: spark-config
         name: spark-config
+      - configMap:
+          defaultMode: 420
+          name: ssh-config
+        name: ssh-config
   volumeClaimTemplates:
     - metadata:
         labels:

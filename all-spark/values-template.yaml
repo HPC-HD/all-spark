@@ -5,3 +5,4 @@ s3endpoint: a3s.fi
 accessKeyId: YOUR_ACCESS_KEY
 secretAccessKey: YOUR_SECRET_ACCESS_KEY
 sparkVersion: spark-3.5.0
+githubKeyLocation: [Location To Github SSH Key]

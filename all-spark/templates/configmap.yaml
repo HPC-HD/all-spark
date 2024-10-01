@@ -120,3 +120,14 @@ data:
     spark.sql.adaptive.coalescePartitions.minPartitionSize          16MB
     spark.sql.objectHashAggregate.sortBased.fallbackThreshold       2147483647
     # ^Prefer dying to OOM and having to manually tune e.g. partition counts to falling back to sort-based aggregation
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app: {{ .Values.appName }}
+  name: ssh-config
+data:
+  config: |
+    Host github.com
+      IdentityFile {{ .Values.githubKeyLocation}} 
