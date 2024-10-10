@@ -15,9 +15,9 @@ data:
 
     # Rahti-specific driver configs
 
-    spark.driver.memory                                             27G
-    spark.driver.maxResultSize                                      26G
-    spark.driver.cores                                              2
+    spark.driver.memory                                             {{ .Values.spark.driverConfig.memory }}
+    spark.driver.maxResultSize                                      {{ .Values.spark.driverConfig.memory }}
+    spark.driver.cores                                              {{ .Values.spark.driverConfig.cores }}
     spark.driver.host                                               spark-notebook
     spark.driver.bindAddress                                        0.0.0.0
     spark.driver.port                                               2222
@@ -27,9 +27,9 @@ data:
     # Rahti-specific worker/executor limits
 
     spark.worker.memory                                             {{ .Values.spark.workerConfig.memory}}
-    spark.worker.cores                                              {{ .Values.spark.workerConfig.cpu}}
+    spark.worker.cores                                              {{ .Values.spark.workerConfig.cores}}
     spark.executor.memory                                           {{ .Values.spark.workerConfig.memory}}
-    spark.executor.cores                                            {{ .Values.spark.workerConfig.cpu}}
+    spark.executor.cores                                            {{ .Values.spark.workerConfig.cores}}
 
     # Shuffle service config (not sure if useful outside Rahti)
 

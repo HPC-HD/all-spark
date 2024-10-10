@@ -7,9 +7,7 @@ secretAccessKey: YOUR_SECRET_ACCESS_KEY
 sparkVersion: spark-3.5.0
 githubKeyLocation: [Location To Github SSH Key]
 spark:
-  workerConfig:
-    memory: 15G
-    cores: 2
+  # The values for workers in the deployment config
   workerDeploy:
     requests:
       memory: 16Gi
@@ -17,3 +15,19 @@ spark:
     limits:
       memory: 16Gi
       cpu: 2
+  # The values for the workers in the spark-config  
+  workerConfig:
+    memory: 15G # should be less than spark.workerDeploy.requests.memory
+    cores: 2
+  # The values for workers in the deployment config
+  driverConfig:
+    memory: 15G
+    cores: 2
+  # The values for the workers in the spark-config 
+  driverDeploy:
+    requests:
+      cpu: 2
+      memory: 16Gi 
+    limits:
+      cpu: 2
+      memory: 16Gi 

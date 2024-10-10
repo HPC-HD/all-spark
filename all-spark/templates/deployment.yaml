@@ -204,10 +204,11 @@ spec:
           protocol: TCP
         resources:
           limits:
-            memory: 2Gi # 16Gi
-            cpu: 1 # 2
+            memory: {{ .Values.spark.driverDeploy.limits.memory}} # 16Gi
+            cpu: {{ .Values.spark.driverDeploy.limits.cpu}} 
           requests:
-            cpu: 1
+            cpu: {{ .Values.spark.driverDeploy.requests.cpu}}
+            memory: {{ .Values.spark.driverDeploy.requests.memory}} # 16Gi
         volumeMounts:
         - mountPath: /home/jovyan/work
           name: {{ .Values.appName }}-notebook-data
